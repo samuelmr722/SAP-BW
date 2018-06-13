@@ -1,0 +1,37 @@
+*&---------------------------------------------------------------------*
+*&  Include           ZBI004V
+*&---------------------------------------------------------------------*
+
+TYPES:
+  BEGIN OF gty_alv,
+    zperi	TYPE zperi,
+    zidco	TYPE char15,
+    zrepo	TYPE char3,
+    zcamv	TYPE char30,
+    zsoci	TYPE zsoci,
+    ztipn	TYPE char5,
+    zcanl	TYPE char5,
+    zmarc	TYPE char2,
+    zgrcl	TYPE char15,
+    zceco	TYPE char15,
+    zclao	TYPE char2,
+    zclaf	TYPE char24,
+    zclat	TYPE char24,
+  END OF gty_alv.
+
+DATA gv_validate TYPE c VALUE abap_false.
+
+PARAMETERS: r_a RADIOBUTTON GROUP gr1 USER-COMMAND ok_code DEFAULT 'X',
+            r_b RADIOBUTTON GROUP gr1.
+
+SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE TEXT-003.
+
+PARAMETERS: p_pe_sa TYPE zperi MODIF ID aa.
+
+SELECTION-SCREEN END OF BLOCK b1.
+
+SELECTION-SCREEN BEGIN OF BLOCK b2 WITH FRAME TITLE TEXT-001.
+
+PARAMETERS: p_pe_sb TYPE zperi MODIF ID bb,
+            p_so_sb TYPE zsoci  MODIF ID bb.
+SELECTION-SCREEN END OF BLOCK b2.

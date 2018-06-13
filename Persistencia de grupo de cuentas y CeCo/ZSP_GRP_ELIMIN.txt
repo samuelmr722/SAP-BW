@@ -1,0 +1,117 @@
+PROCEDURE "_SYS_BIC"."ContabilidadAdministrativa.Modelo::ZSP_GRP_ELIMIN" (
+IN  IN_PERIODO  NVARCHAR (6),
+IN  IN_SOCIEDAD NVARCHAR (4)
+)
+
+   LANGUAGE SQLSCRIPT
+   SQL SECURITY INVOKER
+   	--DEFAULT SCHEMA <default_schema_name>
+   AS   
+BEGIN
+/*
+CREATE COLUMN TABLE "_SYS_BI"."ZCO_GRP_ELIMIN" 
+    ("ZPERI" NVARCHAR(6),
+	 "ZIDCO" NVARCHAR(15),
+	 "ZREPO" NVARCHAR(3),
+	 "ZCAMV" NVARCHAR(30),
+	 "ZSOCI" NVARCHAR(4),
+	 "ZTIPN" NVARCHAR(5),
+	 "ZCANL" NVARCHAR(5),
+	 "ZMARC" NVARCHAR(2),
+	 "ZGRCL" NVARCHAR(15),
+	 "ZCECO" NVARCHAR(15),
+	 "ZCLAO" NVARCHAR(2),
+	 "ZCLAF" NVARCHAR(24),
+	 "ZCLAT" NVARCHAR(24),	 
+ 	 CONSTRAINT "PRIMARY_KEY" PRIMARY KEY ("ZPERI","ZSOCI","ZCECO","ZCLAF","ZCLAT"));
+TRUNCATE TABLE "_SYS_BI"."ZCO_GRP_ELIMIN"; 	 
+DROP TABLE "_SYS_BI"."ZCO_GRP_ELIMIN"; 
+SELECT * FROM "_SYS_BI"."ZCO_GRP_ELIMIN";
+CALL "_SYS_BIC"."ContabilidadAdministrativa.Modelo::ZSP_GRP_ELIMIN"('','CO10')
+*/ 	 
+
+DECLARE LV_PERIODO NVARCHAR(6) := '';
+
+IF IN_PERIODO = '' THEN 
+
+LV_PERIODO := LEFT(CURRENT_DATE,4) || SUBSTRING(CURRENT_DATE,6,2);
+
+ELSE
+
+LV_PERIODO := IN_PERIODO;
+
+END IF;
+
+LT_GRP_ELIMIN =
+SELECT :LV_PERIODO AS "Periodo",
+    "idConcepto",
+	"Reporte",
+    "CampoValor",
+	"Sociedad",
+	"TipoNegocio",
+	"Canal",
+	"Marca",
+	"GrupoClase",
+	"CentroCosto",		
+	"ClaseOpcion",	
+	"ClaseFrom",
+	"ClaseTo"
+FROM "_SYS_BIC"."ContabilidadAdministrativa.Sabanas/ZCV_GRP_ELIMINACION"
+	(placeholder."$$v_sociedad$$"=>:IN_SOCIEDAD)
+GROUP BY "idConcepto",
+	"Reporte",
+    "CampoValor",
+	"Sociedad",
+	"TipoNegocio",
+	"Canal",
+	"Marca",
+	"GrupoClase",
+	"CentroCosto",		
+	"ClaseOpcion",	
+	"ClaseFrom",
+	"ClaseTo";
+
+/*	
+INSERT INTO "_SYS_BI"."ZCO_GRP_ELIMIN"
+SELECT "Periodo",
+    "idConcepto",
+	"Reporte",
+    "CampoValor",
+	"Sociedad",
+	"TipoNegocio",
+	"Canal",
+	"Marca",
+	"GrupoClase",
+	"CentroCosto",		
+	"ClaseOpcion",	
+	"ClaseFrom",
+	"ClaseTo"
+FROM :LT_GRP_ELIMIN AS LT LEFT OUTER JOIN "_SYS_BI"."ZCO_GRP_ELIMIN" AS ZC
+	ON LT."Periodo" = ZC."ZPERI"
+	AND LT."Sociedad" = ZC."ZSOCI"
+	AND LT."CentroCosto" = ZC."ZCECO"
+	AND LT."ClaseFrom" = ZC."ZCLAF"
+	AND LT."ClaseTo" = ZC."ZCLAT"
+WHERE ZC."ZPERI" IS NULL;
+*/
+DELETE FROM "_SYS_BI"."ZCO_GRP_ELIMIN" WHERE "ZPERI" = :IN_PERIODO AND "ZSOCI" = :IN_SOCIEDAD;
+
+INSERT INTO "_SYS_BI"."ZCO_GRP_ELIMIN"
+SELECT "Periodo",
+    "idConcepto",
+	"Reporte",
+    "CampoValor",
+	"Sociedad",
+	"TipoNegocio",
+	"Canal",
+	"Marca",
+	"GrupoClase",
+	"CentroCosto",		
+	"ClaseOpcion",	
+	"ClaseFrom",
+	"ClaseTo"
+FROM :LT_GRP_ELIMIN;
+
+LT_GRP_ELIMIN = SELECT * FROM :LT_GRP_ELIMIN WHERE 1=2;
+
+END;

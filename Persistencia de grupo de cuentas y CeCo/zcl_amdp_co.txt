@@ -1,0 +1,110 @@
+    CLASS zcl_amdp_co DEFINITION PUBLIC.
+
+      PUBLIC SECTION.
+
+        INTERFACES if_amdp_marker_hdb.
+
+        TYPES:
+          BEGIN OF ty_vali_slt_bw,
+            documento_slt     TYPE vbeln,
+            documento_bw      TYPE vbeln,
+            fechaconta_slt_bw TYPE datum,
+            periodo_slt_bw    TYPE char07,
+            cliente_slt_bw    TYPE kunnr,
+            orgaventas_slt_bw TYPE vkorg,
+            contador          TYPE i,
+          END OF ty_vali_slt_bw,
+
+            BEGIN OF ty_alv,
+            zperi   TYPE zperi,
+            zidco   TYPE char15,
+            zrepo   TYPE char3,
+            zcamv   TYPE char30,
+            zsoci   TYPE zsoci,
+            ztipn   TYPE char5,
+            zcanl   TYPE char5,
+            zmarc   TYPE char2,
+            zgrcl   TYPE char15,
+            zceco   TYPE char15,
+            zclao   TYPE char2,
+            zclaf   TYPE char24,
+            zclat   TYPE char24,
+          END OF ty_alv.
+
+        TYPES tt_vali_slt_bw TYPE STANDARD TABLE OF ty_vali_slt_bw.
+        TYPES tt_alv TYPE STANDARD TABLE OF ty_alv.
+
+        CLASS-METHODS: get_data
+          IMPORTING VALUE(i_periodo)     TYPE char07
+                    VALUE(i_fecha_conta) TYPE datum
+                    VALUE(i_opcion)      TYPE i
+                    VALUE(i_orga_vent)   TYPE vkorg
+          EXPORTING VALUE(it_ali_slt_bw) TYPE tt_vali_slt_bw.
+
+        CLASS-METHODS: get_data_grp_elimin
+          IMPORTING VALUE(i_periodo)     TYPE zperi
+                    VALUE(i_sociedad)    TYPE zsoci
+          EXPORTING VALUE(it_alv) TYPE tt_alv.
+
+        CLASS-METHODS: set_data_grp_elimin
+          IMPORTING VALUE(i_periodo)     TYPE zperi
+                    VALUE(i_sociedad)    TYPE zsoci.
+
+    ENDCLASS.
+
+    CLASS zcl_amdp_co IMPLEMENTATION.
+
+      METHOD get_data BY DATABASE PROCEDURE FOR HDB LANGUAGE SQLSCRIPT.
+
+        it_ali_slt_bw =
+        SELECT
+             "DOCUMENTO_SLT",
+             "DOCUMENTO_BW",
+             "FECHACONTA_SLT_BW",
+             "PERIODO_SLT_BW",
+             "CLIENTE_SLT_BW",
+             "ORGAVENTAS_SLT_BW",
+             sum("CONTADOR") AS "CONTADOR"
+        FROM "_SYS_BIC"."CO/ZCV_VAL_COPA_BW_SLT"
+            (PLACEHOLDER."$$I_PERIODO$$"=>:i_periodo,
+             PLACEHOLDER."$$I_FECHA_CONTA$$"=>:i_fecha_conta,
+             PLACEHOLDER."$$I_OPCION$$"=>:i_opcion,
+             PLACEHOLDER."$$I_ORGA_VENT$$"=>:i_orga_vent)
+        GROUP BY "DOCUMENTO_SLT",
+             "DOCUMENTO_BW",
+             "FECHACONTA_SLT_BW",
+             "PERIODO_SLT_BW",
+             "CLIENTE_SLT_BW",
+             "ORGAVENTAS_SLT_BW";
+
+      ENDMETHOD.
+
+   METHOD get_data_grp_elimin BY DATABASE PROCEDURE FOR HDB LANGUAGE SQLSCRIPT.
+
+        it_alv =
+         SELECT
+         "ZPERI",
+         "ZIDCO",
+         "ZREPO",
+         "ZCAMV",
+         "ZSOCI",
+         "ZTIPN",
+         "ZCANL",
+         "ZMARC",
+         "ZGRCL",
+         "ZCECO",
+         "ZCLAO",
+         "ZCLAF",
+         "ZCLAT"
+         FROM "_SYS_BI"."ZCO_GRP_ELIMIN"
+         --WHERE "ZPERI" = '201806' AND "ZSOCI" = 'CO10';
+         WHERE "ZPERI" = :i_periodo AND "ZSOCI" = :i_sociedad;
+
+      ENDMETHOD.
+
+   METHOD set_data_grp_elimin BY DATABASE PROCEDURE FOR HDB LANGUAGE SQLSCRIPT.
+
+            CALL "_SYS_BIC"."ContabilidadAdministrativa.Modelo::ZSP_GRP_ELIMIN"(:i_periodo,:i_sociedad);
+
+      ENDMETHOD.
+    ENDCLASS.

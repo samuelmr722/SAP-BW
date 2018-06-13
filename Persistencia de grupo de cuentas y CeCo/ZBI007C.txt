@@ -1,0 +1,248 @@
+*&---------------------------------------------------------------------*
+*&  Include           ZBI004C
+*&---------------------------------------------------------------------*
+
+CLASS zbi_status_chain DEFINITION.
+
+  PUBLIC SECTION.
+
+    CLASS-DATA: gti_alv    TYPE TABLE OF gty_alv.
+
+    CLASS-DATA: gc_root    TYPE REF TO cx_root,
+                gc_message TYPE string.
+
+    CLASS-METHODS: get_data, show_alv, validate, save_photo.
+
+ENDCLASS.
+
+CLASS zbi_status_chain IMPLEMENTATION.
+
+  METHOD get_data.
+
+    TRY.
+
+        CALL METHOD zcl_amdp_co=>get_data_grp_elimin
+          EXPORTING
+            i_periodo  = p_pe_sb
+            i_sociedad = p_so_sb
+          IMPORTING
+            it_alv = DATA(it_foto_grp_elimin).
+
+            gti_alv = it_foto_grp_elimin.
+
+      CATCH cx_root INTO gc_root.
+        gc_message = gc_root->if_message~get_longtext( ).
+        MESSAGE gc_message TYPE 'E' DISPLAY LIKE 'I'.
+    ENDTRY.
+
+  ENDMETHOD.
+
+  METHOD show_alv.
+
+    TRY.
+
+*.. objeto referenciado
+        DATA:l_c_alv TYPE REF TO zcl_cx_cl_salv_table.
+*.. Crear instancia para controlar ALV OM
+        CREATE OBJECT l_c_alv.
+*.. Se crea la instancia con la tabla interna
+        TRY .
+            cl_salv_table=>factory(
+            IMPORTING
+              r_salv_table = l_c_alv->r_alv
+            CHANGING
+              t_table = gti_alv ).
+          CATCH cx_salv_msg.
+
+        ENDTRY.
+
+*.. Definir funciones
+        l_c_alv->r_functions = l_c_alv->r_alv->get_functions( ).
+        l_c_alv->r_functions->set_all( ).
+
+*.. Asignar opciones
+        l_c_alv->r_aggre = l_c_alv->r_alv->get_aggregations( ).
+        l_c_alv->r_aggre->set_numerical_aggregation('X').
+
+*.. Definir opciones de selección
+        l_c_alv->r_selections = l_c_alv->r_alv->get_selections( ).
+        l_c_alv->r_selections->set_selection_mode( 3 ).
+
+*.. Configuramos las opciones de layout
+        l_c_alv->r_layout = l_c_alv->r_alv->get_layout( ).
+        l_c_alv->es_key-report = sy-repid.
+        l_c_alv->es_key-handle = '1' .
+        l_c_alv->r_layout->set_key( l_c_alv->es_key ).
+
+        CALL METHOD l_c_alv->set_titulo
+          EXPORTING
+            i_titulo = 'Foto de las agrupaciones de eliminaciones por periodo'.
+
+*.. Optimizar columna
+        CALL METHOD l_c_alv->set_optimize.
+
+*.. Definir catalogo
+        CALL METHOD l_c_alv->set_column_names
+          EXPORTING
+            i_column      = 'ZIDCO'
+            i_long_text   = 'Id Concepto'
+            i_medium_text = 'Id Concepto'
+            i_short_text  = 'Id Concept'.
+
+        CALL METHOD l_c_alv->set_column_names
+          EXPORTING
+            i_column      = 'ZREPO'
+            i_long_text   = 'Rerporte'
+            i_medium_text = 'Rerporte'
+            i_short_text  = 'Rerporte'.
+
+        CALL METHOD l_c_alv->set_column_names
+          EXPORTING
+            i_column      = 'ZCAMV'
+            i_long_text   = 'Campo Valor'
+            i_medium_text = 'Campo Valor'
+            i_short_text  = 'CampoValor'.
+
+        CALL METHOD l_c_alv->set_column_names
+          EXPORTING
+            i_column      = 'ZTIPN'
+            i_long_text   = 'Tipo Negocio'
+            i_medium_text = 'Tipo Negocio'
+            i_short_text  = 'TipoNegoci'.
+
+        CALL METHOD l_c_alv->set_column_names
+          EXPORTING
+            i_column      = 'ZCANL'
+            i_long_text   = 'Canal'
+            i_medium_text = 'Canal'
+            i_short_text  = 'Canal'.
+
+        CALL METHOD l_c_alv->set_column_names
+          EXPORTING
+            i_column      = 'ZMARC'
+            i_long_text   = 'Marca'
+            i_medium_text = 'Marca'
+            i_short_text  = 'Marca'.
+
+        CALL METHOD l_c_alv->set_column_names
+          EXPORTING
+            i_column      = 'ZGRCL'
+            i_long_text   = 'Grupo Clase'
+            i_medium_text = 'Grupo Clase'
+            i_short_text  = 'GrupoClase'.
+
+        CALL METHOD l_c_alv->set_column_names
+          EXPORTING
+            i_column      = 'ZCECO'
+            i_long_text   = 'Centro Costo'
+            i_medium_text = 'Centro Costo'
+            i_short_text  = 'CentroCost'.
+
+        CALL METHOD l_c_alv->set_column_names
+          EXPORTING
+            i_column      = 'ZCLAO'
+            i_long_text   = 'Clase Opcion'
+            i_medium_text = 'Clase Opcion'
+            i_short_text  = 'ClaseOpcio'.
+
+        CALL METHOD l_c_alv->set_column_names
+          EXPORTING
+            i_column      = 'ZCLAF'
+            i_long_text   = 'Clase From'
+            i_medium_text = 'Clase From'
+            i_short_text  = 'Clase From'.
+
+
+        CALL METHOD l_c_alv->set_column_names
+          EXPORTING
+            i_column      = 'ZCLAT'
+            i_long_text   = 'Clase To'
+            i_medium_text = 'Clase To'
+            i_short_text  = 'Clase To'.
+* Mostrar ALV
+        l_c_alv->r_alv->display( ).
+
+      CATCH cx_root INTO gc_root.
+        gc_message = gc_root->if_message~get_longtext( ).
+        MESSAGE gc_message TYPE 'E' DISPLAY LIKE 'I'.
+    ENDTRY.
+
+  ENDMETHOD.                    "show_alv
+
+  METHOD validate.
+
+    TRY.
+
+        IF sy-batch IS NOT INITIAL.
+          gv_validate = abap_true.
+        ELSE.
+
+          DATA: lv_answer TYPE c.
+
+          CALL FUNCTION 'POPUP_TO_CONFIRM'
+            EXPORTING
+              titlebar              = 'ALERTA'
+              text_question         = TEXT-002
+              text_button_1         = 'Si' "(006)
+              text_button_2         = 'No' "(007)
+              default_button        = '2'
+              display_cancel_button = 'X'
+              start_column          = 25
+              start_row             = 6
+            IMPORTING
+              answer                = lv_answer
+            EXCEPTIONS
+              text_not_found        = 1
+              OTHERS                = 2.
+
+          IF lv_answer EQ '1'.
+            gv_validate = abap_true.
+          ELSE.
+            gv_validate = abap_false.
+          ENDIF.
+
+        ENDIF.
+
+      CATCH cx_root INTO gc_root.
+        gc_message = gc_root->if_message~get_longtext( ).
+        MESSAGE gc_message TYPE 'E' DISPLAY LIKE 'I'.
+    ENDTRY.
+
+  ENDMETHOD.
+
+
+    METHOD save_photo.
+
+    TRY.
+
+      DATA lv_valor TYPE TVARV_VAL.
+      DATA: l_ti_sociedad TYPE TABLE OF char4,
+            l_es_sociedad  TYPE char4.
+
+     SELECT SINGLE low
+      INTO lv_valor
+      FROM tvarvc
+      WHERE name EQ 'Z_CO_SOCIEDADES_GRP_ELIMIN'
+      AND   type EQ 'P'.
+
+     SPLIT lv_valor AT ',' INTO TABLE l_ti_sociedad.
+
+     LOOP AT l_ti_sociedad INTO l_es_sociedad.
+
+        CALL METHOD zcl_amdp_co=>set_data_grp_elimin
+          EXPORTING
+            i_periodo  = p_pe_sa
+            i_sociedad = l_es_sociedad.
+
+     ENDLOOP.
+
+
+      CATCH cx_root INTO gc_root.
+        gc_message = gc_root->if_message~get_longtext( ).
+        MESSAGE gc_message TYPE 'E' DISPLAY LIKE 'I'.
+    ENDTRY.
+
+  ENDMETHOD.
+
+
+ENDCLASS.

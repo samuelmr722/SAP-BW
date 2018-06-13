@@ -1,0 +1,63 @@
+*&---------------------------------------------------------------------*
+*&  Include           ZBI001E
+*&---------------------------------------------------------------------*
+
+AT SELECTION-SCREEN OUTPUT.
+
+  IF r_a IS NOT INITIAL.
+    LOOP AT SCREEN.
+      IF screen-group1 EQ 'BB'.
+        screen-active = '0'.
+        MODIFY SCREEN.
+      ENDIF.
+    ENDLOOP.
+  ELSEIF r_b IS NOT INITIAL.
+    LOOP AT SCREEN.
+      IF screen-group1 EQ 'AA'.
+        screen-active = '0'.
+        MODIFY SCREEN.
+      ENDIF.
+    ENDLOOP.
+  ELSE.
+    LOOP AT SCREEN.
+      IF screen-group1 EQ 'AA' OR
+         screen-group1 EQ 'BB'.
+        screen-active = '1'.
+        screen-input = '0'.
+        MODIFY SCREEN.
+      ENDIF.
+    ENDLOOP.
+  ENDIF.
+
+
+
+START-OF-SELECTION.
+
+  IF r_a IS NOT INITIAL.
+
+    "Validar ejecucion
+    zbi_status_chain=>validate( ).
+
+    CHECK gv_validate IS NOT INITIAL.
+
+    "Generar foto de las agrupaciones de eliminaciones
+    zbi_status_chain=>save_photo( ).
+
+    WRITE 'Se genero la foto para el periodo seleccionado, por favor validar en el ALV'.
+
+  ENDIF.
+
+  IF r_b IS NOT INITIAL.
+
+    IF p_pe_sb IS INITIAL OR p_so_sb IS INITIAL.
+      MESSAGE 'Debe ingresar periodo y sociedad' TYPE 'I'.
+      RETURN.
+    ENDIF.
+
+    "Busquedas en la BD
+    zbi_status_chain=>get_data( ).
+
+    "Mostrar ALV
+    zbi_status_chain=>show_alv( ).
+
+  ENDIF.
